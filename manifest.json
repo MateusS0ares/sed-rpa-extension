@@ -1,0 +1,28 @@
+{
+    "manifest_version": 3,
+    "name": "SED-RPA",
+    "version": "1.0",
+    "description": "Extensão para automatizar cliques para a automação de processos realizados pelas assistentes sociais no SED.",
+    "permissions": [
+    "tabs",
+    "activeTab",
+    "scripting"
+    ],
+    "host_permissions": [
+    "https://sistemaensinosuperior.sed.sc.gov.br/*"
+    ],
+    "content_scripts": [
+        {
+          "matches": ["https://sistemaensinosuperior.sed.sc.gov.br/iesinscricaolistartodosww.aspx"],
+          "js": ["public/js/popup.js"]
+        }
+      ],
+    "action": {
+    "default_popup": "public/popup.html",
+    "default_icon": {
+      "16": "images/unesc16.png",
+      "48": "images/unesc48.png",
+      "128":"images/unesc128.png"
+    }
+  }
+  }
