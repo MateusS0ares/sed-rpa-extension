@@ -1,28 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('startButton').addEventListener('click', () => {
+  document.getElementById('startButton').addEventListener('click', () => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tab = tabs[0];
-        if (tab.url === "https://sistemaensinosuperior.sed.sc.gov.br/iesinscricaolistartodosww.aspx") {
-          chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            function: clickButtons,
-          }, (results) => {
-            const result = results[0];
-            if (result && result.status === "success") {
-              document.getElementById('status').textContent = "Automação concluída com sucesso!";
-            } else {
-              document.getElementById('status').textContent = "Erro ao executar automação.";
-            }
-          });
-        } else {
-          document.getElementById('status').textContent = "Esta extensão só funciona na página específica do SED.";
-        }
+          const tab = tabs[0];
+          if (tab.url === "https://sistemaensinosuperior.sed.sc.gov.br/iesinscricaolistartodosww.aspx") {
+              chrome.scripting.executeScript({
+                  target: { tabId: tab.id },
+                  function: clickButtons,
+              });
+          } else {
+              document.getElementById('status').textContent = "Esta extensão só funciona na página específica do SED.";
+          }
       });
-    });
   });
-  
-  async function clickButtons() {
-    const xpaths = [
+
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.status) {
+          document.getElementById('status').textContent = message.status;
+      }
+  });
+});
+
+async function clickButtons() {
+  const xpaths = [
       '//button[@title="Seleciona colunas"]',
       '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Nome Social "]',
       '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Nascimento"]',
@@ -67,28 +66,39 @@ document.addEventListener('DOMContentLoaded', () => {
       '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Alt. Cadastro"]',
       '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc=" Ensino Médio em Rede Púb. SC ou Inst. Privada bolsa parcial/Integ."]',
       '//li//input[@value="Atualizar colunas"]',
-    ];
-  
-    for (let xpath of xpaths) {
-      const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-      if (element) {
-        element.click();
-        await new Promise(resolve => setTimeout(resolve, 250)); // Espera 250ms antes de clicar no próximo botão
-      } else {
-        console.error(`Elemento não encontrado para o XPath: ${xpath}`);
-        return { status: "error" };
-      }
-    }
-  
-    // Clicar no botão de exportar para Excel após um tempo maior para garantir que todos os botões tenham sido clicados
-    const excelButton = document.evaluate('//input[@title="Exportar para Excel"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-    if (excelButton) {
-      await new Promise(resolve => setTimeout(resolve, 15000)); // Espera 15 segundos antes de exportar para Excel
-      excelButton.click();
-      return { status: "success" };
+  ];
+
+  for (let xpath of xpaths) {
+    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    if (element) {
+        const isSelected = element.getAttribute('sel') === 'T';
+        if (!isSelected) {
+            console.log(`Elemento encontrado e clicado para o XPath: ${xpath}`);
+            chrome.runtime.sendMessage({ status: `Elemento encontrado e clicado: ${xpath}` });
+            element.click();
+            await new Promise(resolve => setTimeout(resolve, 250));
+        } else {
+            console.log(`Elemento já selecionado (não clicado): ${xpath}`);
+            chrome.runtime.sendMessage({ status: `Elemento já selecionado (não clicado): ${xpath}` });
+        }
     } else {
-      console.error("Botão de exportação para Excel não encontrado.");
-      return { status: "error" };
+        console.error(`Elemento não encontrado para o XPath: ${xpath}`);
+        chrome.runtime.sendMessage({ status: `Erro: Elemento não encontrado para o XPath: ${xpath}` });
+        return { status: "error" };
     }
-  }
-  
+}
+
+const excelButton = document.evaluate('//input[@title="Exportar para Excel"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+if (excelButton) {
+    console.log("Botão de exportação para Excel encontrado.");
+    chrome.runtime.sendMessage({ status: "Botão de exportação para Excel encontrado. Aguardando..." });
+    await new Promise(resolve => setTimeout(resolve, 6000));
+    excelButton.click();
+    chrome.runtime.sendMessage({ status: "Botão de baixar Excel clicado. Aguardando download..." });
+    return { status: "excelClicked" };
+} else {
+    console.error("Botão de exportação para Excel não encontrado.");
+    chrome.runtime.sendMessage({ status: "Erro: Botão de exportação para Excel não encontrado." });
+    return { status: "error" };
+}
+}
