@@ -21,6 +21,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   
+    // Botão para gerar planilha UNIEDU
+    document.getElementById('unieduButton').addEventListener('click', () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tab = tabs[0];
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          function: exportCadastroEstudantesExcelUniedu,
+        });
+      });
+    });
+
     // Listener para mensagens de status
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.status) {
@@ -30,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 async function clickButtons() {
-    if (!window.location.href.includes("iesinscricaolistartodosww.aspx")) {
+    if (!window.location.href.startsWith("https://sistemaensinosuperior.sed.sc.gov.br/iesinscricaolistartodosww.aspx")) {
         chrome.runtime.sendMessage({ status: "Esta extensão só funciona na página de Cadastro Estudante do SED." });
         return;
     }
@@ -87,7 +98,7 @@ async function clickButtons() {
 }
 
 async function clickRenewalButtons() {
-    if (!window.location.href.includes("iespalunobolsistacontinuidadeww.aspx")) {
+    if (!window.location.href.startsWith("https://sistemaensinosuperior.sed.sc.gov.br/iespalunobolsistacontinuidadeww.aspx")) {
         chrome.runtime.sendMessage({ status: "Esta extensão só funciona na página de Renovação Benefício do SED." });
         return;
     }
@@ -108,6 +119,43 @@ async function clickRenewalButtons() {
     ];
 
     await processXpaths(xpaths);
+}
+
+async function exportCadastroEstudantesExcelUniedu() {
+    if (
+        !window.location.href.startsWith("https://bolsasuniedu.sed.sc.gov.br/iesinscricaolistartodosww.aspx")
+    ) {
+        chrome.runtime.sendMessage({ status: "Esta extensão só funciona na página de Cadastro Estudante do UNIEDU." });
+        return;
+    }
+
+    const xpaths = [
+        '//button[@title="Seleciona colunas"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Matrícula na IES"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Unidade Escolar"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Programa"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Tipo"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="%"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Bolsa"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Outros"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Renda"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Valor dos Bens"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Família"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Nascimento"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Motivo Negado/Data Concessão"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Naturalidade"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="DDD - Res."]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Telefone Res."]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="DDD - Com."]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Tefefone Comercial"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="DDD - Cel."]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="Celular"]',
+        '//div[@class="FilterOptions FilterOptionsMultiSelection"]//a/span[@dsc="E-mail"]',
+        '//li//input[@value="Atualizar colunas"]',
+    ];
+
+    await processXpaths(xpaths);
+
 }
 
 async function processXpaths(xpaths) {
