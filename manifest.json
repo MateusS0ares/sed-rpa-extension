@@ -9,13 +9,16 @@
     "scripting"
     ],
     "host_permissions": [
-    "https://sistemaensinosuperior.sed.sc.gov.br/*"
+    "https://sistemaensinosuperior.sed.sc.gov.br/*",
+    "https://bolsasuniedu.sed.sc.gov.br/*"
     ],
     "content_scripts": [
         {
           "matches": [
             "https://sistemaensinosuperior.sed.sc.gov.br/iesinscricaolistartodosww.aspx",
-            "https://sistemaensinosuperior.sed.sc.gov.br/iespalunobolsistacontinuidadeww.aspx"
+            "https://sistemaensinosuperior.sed.sc.gov.br/iespalunobolsistacontinuidadeww.aspx",
+            "https://bolsasuniedu.sed.sc.gov.br/iesinscricaolistartodosww.aspx",
+            "https://bolsasuniedu.sed.sc.gov.br/iespalunobolsistacontinuidadeww.aspx"
           ],
           "js": ["public/js/popup.js"]
         }
